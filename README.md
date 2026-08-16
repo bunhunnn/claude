@@ -12,6 +12,14 @@ extension. This tool talks to the same private API the extension uses.
 > without notice. Only use this against an account you own. This project is
 > not affiliated with or endorsed by DuckDuckGo.
 
+Two ways to use it:
+
+- **[`desktop-app/`](desktop-app/)** — a real Mac app with buttons and tabs
+  (login, generate one alias, batch-generate several, history). No coding
+  experience needed after a one-time setup — see
+  [`desktop-app/README.md`](desktop-app/README.md).
+- **This CLI** — for the terminal-comfortable, described below.
+
 ## Install
 
 ```bash

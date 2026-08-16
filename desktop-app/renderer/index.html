@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+  <title>DuckMail</title>
+  <link rel="stylesheet" href="renderer.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">🦆 DuckMail</div>
+    <div id="account-status" class="account-status">Checking account…</div>
+  </header>
+
+  <nav id="tabs" class="tabs">
+    <button class="tab-btn active" data-tab="account">Account</button>
+    <button class="tab-btn" data-tab="generate">Generate</button>
+    <button class="tab-btn" data-tab="batch">Batch Generate</button>
+    <button class="tab-btn" data-tab="history">History</button>
+  </nav>
+
+  <main>
+    <!-- ACCOUNT TAB -->
+    <section id="tab-account" class="tab-panel active">
+      <div id="logged-out-view">
+        <h2>Log in to your duck.com account</h2>
+        <p class="hint">Step 1: enter your duck.com address. We'll email a one-time code to your backup inbox.</p>
+        <div class="row">
+          <input id="login-username" type="text" placeholder="yourname1234" autocomplete="off" />
+          <button id="btn-request-code">Send me a code</button>
+        </div>
+
+        <div id="otp-section" class="hidden">
+          <p class="hint">Step 2: check your email, then paste the code (or the full link) below.</p>
+          <div class="row">
+            <input id="login-otp" type="text" placeholder="Code or link from the email" autocomplete="off" />
+            <button id="btn-verify-code">Verify &amp; log in</button>
+          </div>
+        </div>
+        <p id="account-error" class="error hidden"></p>
+      </div>
+
+      <div id="logged-in-view" class="hidden">
+        <h2>You're logged in</h2>
+        <p>Duck.com username: <strong id="whoami-username"></strong></p>
+        <p>Personal address: <strong id="whoami-address"></strong></p>
+        <button id="btn-logout" class="secondary">Log out</button>
+      </div>
+    </section>
+
+    <!-- SINGLE GENERATE TAB -->
+    <section id="tab-generate" class="tab-panel">
+      <h2>Generate one alias</h2>
+      <p class="hint">Creates a new random @duck.com address that forwards to your real inbox.</p>
+      <div class="row">
+        <input id="gen-note" type="text" placeholder="Optional note (e.g. 'example.com signup')" />
+        <button id="btn-generate-one">Generate</button>
+      </div>
+      <div id="gen-one-result" class="result hidden">
+        <code id="gen-one-address"></code>
+        <button id="btn-copy-one" class="secondary small">Copy</button>
+      </div>
+      <p id="gen-one-error" class="error hidden"></p>
+    </section>
+
+    <!-- BATCH GENERATE TAB -->
+    <section id="tab-batch" class="tab-panel">
+      <h2>Batch generate</h2>
+      <p class="hint">
+        Creates several aliases in one go, at a gentle pace (roughly one every 1.5s) so it looks
+        like normal use rather than a burst of automated requests. Capped at 25 per batch.
+      </p>
+      <div class="row">
+        <input id="batch-count" type="number" min="1" max="25" value="5" />
+        <input id="batch-note" type="text" placeholder="Optional note for all of them" />
+        <button id="btn-batch-start">Start batch</button>
+        <button id="btn-batch-cancel" class="secondary hidden">Cancel</button>
+      </div>
+      <div id="batch-progress-wrap" class="hidden">
+        <div class="progress-bar"><div id="batch-progress-fill" class="progress-fill"></div></div>
+        <p id="batch-progress-label" class="hint"></p>
+      </div>
+      <ul id="batch-results" class="address-list"></ul>
+      <p id="batch-error" class="error hidden"></p>
+    </section>
+
+    <!-- HISTORY TAB -->
+    <section id="tab-history" class="tab-panel">
+      <h2>History</h2>
+      <p class="hint">Tracked locally on this computer only — DuckDuckGo doesn't keep a server-side list.</p>
+      <ul id="history-list" class="address-list"></ul>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
