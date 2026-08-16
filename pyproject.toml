@@ -1,0 +1,18 @@
+[project]
+name = "duckmail"
+version = "0.1.0"
+description = "CLI for generating DuckDuckGo Email Protection (@duck.com) aliases"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.28",
+]
+
+[project.scripts]
+duckmail = "duckmail.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["duckmail"]
