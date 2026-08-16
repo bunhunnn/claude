@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, clipboard, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, clipboard, shell, dialog } = require('electron');
+const fs = require('fs');
 const path = require('path');
 
 const api = require('./src/api');
@@ -138,6 +139,35 @@ ipcMain.handle('alias:cancelBatch', async () => {
 
 ipcMain.handle('history:list', async () => {
   return store.loadHistory();
+});
+
+function csvEscape(value) {
+  const str = String(value == null ? '' : value);
+  if (/[",\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+ipcMain.handle('history:exportCsv', async () => {
+  const entries = store.loadHistory();
+  if (entries.length === 0) {
+    return { ok: false, error: 'No history to export.' };
+  }
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    title: 'Export alias history',
+    defaultPath: 'duckmail-history.csv',
+    filters: [{ name: 'CSV', extensions: ['csv'] }],
+  });
+  if (canceled || !filePath) {
+    return { ok: false, cancelled: true };
+  }
+  const rows = ['address,note,created_at'];
+  for (const entry of entries) {
+    rows.push([csvEscape(entry.address), csvEscape(entry.note), csvEscape(entry.createdAt)].join(','));
+  }
+  fs.writeFileSync(filePath, rows.join('\n'));
+  return { ok: true, filePath };
 });
 
 ipcMain.handle('clipboard:write', async (_event, text) => {

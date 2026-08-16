@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld('duckmail', {
   },
 
   history: () => ipcRenderer.invoke('history:list'),
+  exportHistoryCsv: () => ipcRenderer.invoke('history:exportCsv'),
   copyToClipboard: (text) => ipcRenderer.invoke('clipboard:write', text),
 });

@@ -88,6 +88,18 @@
     <section id="tab-history" class="tab-panel">
       <h2>History</h2>
       <p class="hint">Tracked locally on this computer only — DuckDuckGo doesn't keep a server-side list.</p>
+      <div class="row">
+        <input id="history-search" type="text" placeholder="Search by address or note…" />
+        <select id="history-sort">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="address-asc">Address A → Z</option>
+          <option value="address-desc">Address Z → A</option>
+          <option value="note-asc">Note A → Z</option>
+        </select>
+        <button id="btn-export-history" class="secondary">Export CSV</button>
+      </div>
+      <p id="history-count" class="hint"></p>
       <ul id="history-list" class="address-list"></ul>
     </section>
   </main>

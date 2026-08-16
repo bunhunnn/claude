@@ -92,6 +92,16 @@ input[type="text"], input[type="number"] {
 
 input[type="number"] { flex: 0 0 90px; }
 
+select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+
 button {
   padding: 10px 16px;
   border-radius: 8px;

@@ -19,6 +19,7 @@
   "build": {
     "appId": "com.example.duckmail",
     "productName": "DuckMail",
+    "publish": null,
     "files": [
       "main.js",
       "preload.js",

@@ -1,6 +1,6 @@
 # DuckMail (desktop app)
 
-A real Mac app (built with Electron) for generating DuckDuckGo Email
+A real desktop app (built with Electron) for generating DuckDuckGo Email
 Protection (`@duck.com`) aliases — log in, generate one alias at a time, or
 batch-generate several at once, all from a window with buttons instead of a
 terminal.
@@ -8,48 +8,52 @@ terminal.
 > Uses DuckDuckGo's private, unofficial Email Protection API (the same one
 > their browser extension uses). Only use it with an account you own.
 
-## One-time setup (about 5 minutes)
+## Windows
 
-You only need to do this once. After this, you'll have a normal app icon you
-can just double-click forever.
+If you were handed a `DuckMail Setup 0.1.0.exe` file directly, that's a
+ready-to-run installer — skip to **"Installing on Windows"** below. Otherwise,
+build it yourself:
 
 1. **Install Node.js.** Go to [nodejs.org](https://nodejs.org), download the
-   macOS installer (the "LTS" button), and install it like any other Mac app
-   (double-click, click through, done).
+   Windows installer, and install it like any other program.
+2. **Open PowerShell.** Click Start, type `PowerShell`, press Enter.
+3. `cd` into the `desktop-app` folder (type `cd ` with a trailing space, then
+   drag the folder from File Explorer into the window, then Enter).
+4. Run:
+   ```
+   npm install
+   npm run dist:win
+   ```
+5. Your installer appears at `desktop-app\dist\DuckMail Setup 0.1.0.exe`.
 
-2. **Open Terminal.** Press `Cmd + Space`, type `Terminal`, press Enter.
+### Installing on Windows
 
-3. **Get this folder onto your Mac** (skip if you already have it), then in
-   Terminal, navigate into the `desktop-app` folder — the easiest way is to
-   type `cd ` (with a trailing space) and drag the `desktop-app` folder from
-   Finder into the Terminal window, then press Enter.
+Double-click `DuckMail Setup 0.1.0.exe`. Because it isn't signed with a paid
+code-signing certificate, Windows SmartScreen will likely show a blue "Windows
+protected your PC" warning. Click **More info**, then **Run anyway**. This is
+normal for independently-built apps and only happens the first time. The
+installer then adds a normal DuckMail shortcut to your Start Menu.
 
-4. **Run these two commands** (copy-paste each, press Enter, wait for it to
-   finish before the next one):
+## Mac
 
+1. **Install Node.js.** Go to [nodejs.org](https://nodejs.org), download the
+   macOS installer, and install it like any other Mac app.
+2. **Open Terminal** (`Cmd + Space`, type `Terminal`, Enter).
+3. `cd` into the `desktop-app` folder (type `cd ` with a trailing space, drag
+   the folder from Finder into Terminal, Enter).
+4. Run:
    ```
    npm install
    npm run dist
    ```
+5. Open the new `dist` folder — you'll see `DuckMail.app`. Drag it to
+   `Applications`.
 
-   The first downloads what the app needs. The second builds the actual
-   `.app`. It can take a couple of minutes.
+### Opening it the first time on Mac
 
-5. **Find your app.** A new folder called `dist` will appear inside
-   `desktop-app`. Open it in Finder — you'll see `DuckMail.app` (and a
-   `.dmg` installer). Drag `DuckMail.app` to your `Applications` folder.
-
-## Opening it the first time
-
-Because this app isn't signed with a paid Apple developer certificate,
-macOS will refuse to open it normally the first time and may say it's
-"damaged" or from an "unidentified developer." To open it anyway:
-
-1. Right-click (or Control-click) `DuckMail.app` in Applications.
-2. Choose **Open**.
-3. Click **Open** again in the dialog that appears.
-
-You only need to do this once — after that it opens normally like any app.
+Because it isn't signed with a paid Apple developer certificate, macOS will
+refuse to open it normally the first time. To open it anyway: right-click
+`DuckMail.app` → **Open** → **Open** again in the dialog. Only needed once.
 
 ## Using the app
 
@@ -58,16 +62,16 @@ You only need to do this once — after that it opens normally like any app.
 - **Generate tab**: make one new alias at a time.
 - **Batch Generate tab**: make several at once (up to 25), at a gentle,
   human-like pace rather than firing them all at once.
-- **History tab**: everything you've generated, kept only on your own
-  computer (DuckDuckGo doesn't keep a server-side list).
+- **History tab**: search, sort (newest/oldest/alphabetical), and export to
+  CSV everything you've generated. Kept only on your own computer —
+  DuckDuckGo doesn't keep a server-side list.
 
-Credentials and history are stored locally in your Mac's app-data folder,
+Credentials and history are stored locally in your OS's app-data folder,
 readable only by your own user account.
 
 ## Developing / running without building an installer
 
-If you just want to run the app while working on it (skips the `.app`
-packaging step):
+If you just want to run the app while working on it (skips packaging):
 
 ```
 npm install

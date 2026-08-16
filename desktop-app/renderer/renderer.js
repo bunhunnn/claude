@@ -176,34 +176,80 @@ $('btn-batch-cancel').addEventListener('click', () => {
 });
 
 // ---------- History ----------
-async function refreshHistory() {
-  const entries = await window.duckmail.history();
+let allHistoryEntries = [];
+
+function sortEntries(entries, mode) {
+  const sorted = entries.slice();
+  switch (mode) {
+    case 'oldest':
+      return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    case 'address-asc':
+      return sorted.sort((a, b) => a.address.localeCompare(b.address));
+    case 'address-desc':
+      return sorted.sort((a, b) => b.address.localeCompare(a.address));
+    case 'note-asc':
+      return sorted.sort((a, b) => (a.note || '').localeCompare(b.note || ''));
+    case 'newest':
+    default:
+      return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+}
+
+function renderHistory() {
+  const query = $('history-search').value.trim().toLowerCase();
+  const sortMode = $('history-sort').value;
+
+  let filtered = allHistoryEntries;
+  if (query) {
+    filtered = filtered.filter(
+      (entry) =>
+        entry.address.toLowerCase().includes(query) || (entry.note || '').toLowerCase().includes(query)
+    );
+  }
+  filtered = sortEntries(filtered, sortMode);
+
+  $('history-count').textContent = `${filtered.length} of ${allHistoryEntries.length} alias${
+    allHistoryEntries.length === 1 ? '' : 'es'
+  }`;
+
   const list = $('history-list');
   list.innerHTML = '';
-  if (entries.length === 0) {
-    list.innerHTML = '<li>No aliases generated yet.</li>';
+  if (filtered.length === 0) {
+    list.innerHTML = `<li>${allHistoryEntries.length === 0 ? 'No aliases generated yet.' : 'No matches.'}</li>`;
     return;
   }
-  entries
-    .slice()
-    .reverse()
-    .forEach((entry) => {
-      const li = document.createElement('li');
-      const when = new Date(entry.createdAt).toLocaleString();
-      li.innerHTML = `
-        <div class="addr-main">
-          <code>${entry.address}</code>
-          <span class="meta">${when}${entry.note ? ' · ' + entry.note : ''}</span>
-        </div>
-      `;
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'secondary small';
-      copyBtn.textContent = 'Copy';
-      copyBtn.addEventListener('click', () => window.duckmail.copyToClipboard(entry.address));
-      li.appendChild(copyBtn);
-      list.appendChild(li);
-    });
+  filtered.forEach((entry) => {
+    const li = document.createElement('li');
+    const when = new Date(entry.createdAt).toLocaleString();
+    li.innerHTML = `
+      <div class="addr-main">
+        <code>${entry.address}</code>
+        <span class="meta">${when}${entry.note ? ' · ' + entry.note : ''}</span>
+      </div>
+    `;
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'secondary small';
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => window.duckmail.copyToClipboard(entry.address));
+    li.appendChild(copyBtn);
+    list.appendChild(li);
+  });
 }
+
+async function refreshHistory() {
+  allHistoryEntries = await window.duckmail.history();
+  renderHistory();
+}
+
+$('history-search').addEventListener('input', renderHistory);
+$('history-sort').addEventListener('change', renderHistory);
+
+$('btn-export-history').addEventListener('click', async () => {
+  const result = await window.duckmail.exportHistoryCsv();
+  if (!result.ok && !result.cancelled) {
+    alert(result.error || 'Failed to export history.');
+  }
+});
 
 // ---------- Init ----------
 refreshAccountStatus();
