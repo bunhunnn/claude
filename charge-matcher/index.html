@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Charge Matcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --sunken:#E9EDF1; --line:#D5DCE3;
+  --ink:#16202A; --muted:#5B6873; --accent:#1F5FAD; --accent-ink:#FFFFFF; --accent-soft:#E3ECF8;
+  --good:#1E7A4C; --good-soft:#DFF1E7; --warn:#96600F; --warn-soft:#FBEFD9; --bad:#AE2A21; --bad-soft:#F9E1DE;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F151B; --surface:#17202A; --sunken:#111A22; --line:#2A3743;
+    --ink:#E4E9EE; --muted:#93A1AD; --accent:#7FB0F0; --accent-ink:#0F151B; --accent-soft:#1B2D44;
+    --good:#6CCB98; --good-soft:#163527; --warn:#E8B566; --warn-soft:#3A2C14; --bad:#F08A80; --bad-soft:#3E1D1A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F151B; --surface:#17202A; --sunken:#111A22; --line:#2A3743;
+  --ink:#E4E9EE; --muted:#93A1AD; --accent:#7FB0F0; --accent-ink:#0F151B; --accent-soft:#1B2D44;
+  --good:#6CCB98; --good-soft:#163527; --warn:#E8B566; --warn-soft:#3A2C14; --bad:#F08A80; --bad-soft:#3E1D1A;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--sans);padding-inline:16px;padding-block:24px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-family:var(--cond);font-weight:600;font-size:30px;letter-spacing:-.01em;line-height:1.1}
+h2{font-size:15px;font-weight:600}
+p{margin:0}
+.lede{color:var(--muted);max-width:68ch}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 12px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:3px 8px;font-size:12px}
+.linkish{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+
+header{display:flex;flex-direction:column;gap:8px}
+.privacy{font-size:12.5px;color:var(--muted)}
+
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel.drag{border-color:var(--accent);background:var(--accent-soft)}
+.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.chip{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--sunken);color:var(--muted);white-space:nowrap}
+.chip.example{background:var(--warn-soft);color:var(--warn)}
+.chip.loaded{background:var(--good-soft);color:var(--good)}
+.source{font-size:12.5px;color:var(--muted)}
+.load-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.paste{display:flex;flex-direction:column;gap:6px}
+.paste textarea{width:100%;min-height:96px;resize:vertical;border:1px solid var(--line);border-radius:6px;background:var(--sunken);padding:8px;font:12px/1.4 var(--mono)}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+.field select,.field input{width:100%;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:5px 6px;min-width:0}
+.hint{font-size:12.5px;color:var(--muted)}
+.hint.warn{color:var(--warn)}
+
+.settings{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;padding:12px 16px;border:1px solid var(--line);border-radius:8px;background:var(--sunken)}
+.settings .field{flex:0 1 auto}
+.settings input[type=number]{width:80px}
+
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;text-align:left;border-top:3px solid var(--line)}
+.tile[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:-1px}
+.tile.good{border-top-color:var(--good)} .tile.warn{border-top-color:var(--warn)} .tile.bad{border-top-color:var(--bad)}
+.tile .big{font-family:var(--cond);font-size:28px;font-weight:600;line-height:1.1}
+.tile .label{font-weight:600}
+.tile .sub{font-size:12.5px;color:var(--muted)}
+
+.results{background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column}
+.results-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.results-bar .opts{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.check{display:flex;gap:6px;align-items:center;font-size:13px}
+.table-scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--sunken)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+td .sec{color:var(--muted);font-size:12px}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.quiet{background:var(--sunken);color:var(--muted)}
+.notes{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted);min-width:180px}
+.stack{display:flex;flex-direction:column;gap:6px}
+.empty{padding:28px 16px;color:var(--muted);text-align:center}
+.ignored{padding:10px 16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px}
+.how{font-size:13px;color:var(--muted);max-width:80ch}
+.how summary{cursor:pointer;color:var(--ink);font-weight:500}
+.how ul{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+@media (max-width:520px){ h1{font-size:25px} td,th{padding:8px} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Statement reconciliation</span>
+    <h1>Charge Matcher</h1>
+    <p class="lede">Check your bank charges against the orders in your order tracker. Load a CSV from each side and you'll see which charges line up with an order, which charges have no order behind them, and which orders were never charged.</p>
+    <p class="privacy">Your files are read by this page in your browser and never uploaded anywhere.</p>
+  </header>
+
+  <section class="inputs">
+    <div class="panel" id="panel-bank" data-side="bank">
+      <div class="panel-head">
+        <div class="stack" style="gap:2px">
+          <h2>Bank or card statement</h2>
+          <span class="source" id="bank-source"></span>
+        </div>
+        <span class="chip" id="bank-chip"></span>
+      </div>
+      <div class="load-row">
+        <label class="btn primary" for="bank-file">Choose CSV…</label>
+        <input type="file" id="bank-file" accept=".csv,.tsv,.txt,text/csv" hidden>
+        <button class="btn" type="button" data-paste="bank">Paste instead</button>
+        <span class="hint">or drop a file here</span>
+      </div>
+      <div class="paste" id="bank-paste" hidden>
+        <textarea id="bank-paste-text" placeholder="Paste CSV text, or rows copied from a spreadsheet"></textarea>
+        <div><button class="btn small" type="button" data-use-paste="bank">Use pasted data</button></div>
+      </div>
+      <div class="map" id="bank-map"></div>
+      <p class="hint" id="bank-hint"></p>
+    </div>
+
+    <div class="panel" id="panel-orders" data-side="orders">
+      <div class="panel-head">
+        <div class="stack" style="gap:2px">
+          <h2>Orders from your tracker</h2>
+          <span class="source" id="orders-source"></span>
+        </div>
+        <span class="chip" id="orders-chip"></span>
+      </div>
+      <div class="load-row">
+        <label class="btn primary" for="orders-file">Choose CSV…</label>
+        <input type="file" id="orders-file" accept=".csv,.tsv,.txt,text/csv" hidden>
+        <button class="btn" type="button" data-paste="orders">Paste instead</button>
+        <span class="hint">or drop a file here</span>
+      </div>
+      <div class="paste" id="orders-paste" hidden>
+        <textarea id="orders-paste-text" placeholder="Paste an exported CSV, or select the orders table on the tracker's site, copy it, and paste here"></textarea>
+        <div><button class="btn small" type="button" data-use-paste="orders">Use pasted data</button></div>
+      </div>
+      <div class="map" id="orders-map"></div>
+      <p class="hint" id="orders-hint"></p>
+    </div>
+  </section>
+
+  <section class="settings" aria-label="Matching rules">
+    <div class="field">
+      <label for="set-before">Charge up to … days before order</label>
+      <input type="number" id="set-before" min="0" max="60" value="3">
+    </div>
+    <div class="field">
+      <label for="set-after">Charge up to … days after order</label>
+      <input type="number" id="set-after" min="0" max="90" value="10">
+    </div>
+    <div class="field">
+      <label for="set-pct">Allowed price difference (%)</label>
+      <input type="number" id="set-pct" min="0" max="50" step="0.5" value="5">
+    </div>
+    <div class="field" id="sign-field">
+      <label for="set-sign">Purchases on the statement are</label>
+      <select id="set-sign">
+        <option value="auto">Detect automatically</option>
+        <option value="neg">Negative amounts</option>
+        <option value="pos">Positive amounts</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="results">
+    <div class="results-bar">
+      <h2 id="results-title"></h2>
+      <div class="opts">
+        <label class="check" id="known-wrap"><input type="checkbox" id="only-known"> Only stores I order from</label>
+        <button class="btn small" type="button" id="copy-tsv">Copy all results for a spreadsheet</button>
+      </div>
+    </div>
+    <div class="table-scroll" id="table"></div>
+    <div class="ignored" id="ignored" hidden></div>
+  </section>
+
+  <details class="how">
+    <summary>How matching works</summary>
+    <ul>
+      <li>A charge matches an order when the amount is the same to the cent and the charge date falls inside the day window above. Matches where the store name also shows up in the bank description rank first.</li>
+      <li>If the amount is off by less than the allowed percentage (shipping, tax, a partial refund) and the store name matches, the pair goes to <b>Needs a look</b>.</li>
+      <li>Split shipments are handled: one order charged as two or three separate charges, or two or three orders from the same store charged together.</li>
+      <li>Bank names like <span class="mono">AMZN Mktp</span>, <span class="mono">WM Supercenter</span> and <span class="mono">TGT</span> are recognized as Amazon, Walmart and Target.</li>
+      <li>Click <b>Not a match</b> to break a pairing and re-run. Click <b>Ignore merchant</b> on everyday charges (groceries, gas) to hide them; this is remembered in this browser.</li>
+      <li>Orders placed after your statement ends are labelled as such, since those charges may not have posted yet.</li>
+    </ul>
+  </details>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money = n => (n < 0 ? "−" : "") + "$" + Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtDay = d => isFinite(d) ? new Date(d*864e5).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"}) : "—";
+
+const SAMPLE_BANK = `Transaction Date,Post Date,Description,Category,Type,Amount,Memo
+09/02/2026,09/03/2026,AMAZON MKTPL*RT4KD82J1,Shopping,Sale,-34.99,
+09/03/2026,09/04/2026,TRADER JOE S #552,Groceries,Sale,-62.18,
+09/04/2026,09/05/2026,AMZN Mktp US*2K8LQ0,Shopping,Sale,-18.42,
+09/04/2026,09/05/2026,AMZN Mktp US*2K9MZ1,Shopping,Sale,-27.10,
+09/05/2026,09/06/2026,BESTBUY.COM 00615,Shopping,Sale,-149.99,
+09/08/2026,09/09/2026,SQ *BLUE BOTTLE COFFEE,Food & Drink,Sale,-6.50,
+09/09/2026,09/10/2026,UNIQLO USA ONLINE,Shopping,Sale,-58.90,
+09/11/2026,09/12/2026,ETSY.COM*LINENHAUS,Shopping,Sale,-45.00,
+09/12/2026,09/13/2026,TARGET.COM *,Shopping,Sale,-23.47,
+09/14/2026,09/15/2026,Payment Thank You-Mobile,,Payment,500.00,
+09/15/2026,09/16/2026,NIKE.COM,Shopping,Sale,-112.00,
+09/18/2026,09/19/2026,AMAZON.COM*9X1PL2,Shopping,Sale,-12.99,
+09/20/2026,09/21/2026,SHEIN.COM,Shopping,Sale,-39.87,
+09/21/2026,09/22/2026,SHELL OIL 57442,Gas,Sale,-48.20,`;
+
+const SAMPLE_ORDERS = `Order Date,Store,Order Number,Item,Total,Tracking Number,Status
+2026-09-01,Amazon,112-4471029-5521,USB-C charging cable 3-pack,34.99,TBA304881200,Delivered
+2026-09-03,Amazon,112-9902114-0038,Paperback books (2),45.52,TBA305119043,Delivered
+2026-09-05,Best Buy,BBY01-806121,Sony WH-CH720N headphones,149.99,1Z999AA10123456784,Delivered
+2026-09-08,Uniqlo,US-7740213,AIRism crew tees,56.90,9400111899223344556677,Delivered
+2026-09-10,Etsy,3310928847,Linen napkins (set of 4),45.00,9205590164917312751089,Shipped
+2026-09-12,Target,902003118,Kitchen storage bins,23.47,,Delivered
+2026-09-13,Nike,C01928374,Running shorts,112.00,1Z84R2Y60394827711,Delivered
+2026-09-16,Amazon,113-0028841-7710,Phone case,21.99,TBA311402277,In transit
+2026-09-18,Amazon,113-5520193-4402,Dish sponges,12.99,TBA311877310,Delivered
+2026-09-24,Zara,ZR-55190023,Wool overshirt,79.90,,Ordered`;
+
+/* ---------- parsing ---------- */
+function detectDelim(text){
+  const lines = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 30);
+  let best = ",", bestScore = -1;
+  for (const d of [",", "\t", ";", "|"]) {
+    const counts = lines.map(l => l.split(d).length - 1).filter(c => c > 0);
+    if (!counts.length) continue;
+    const freq = {}; counts.forEach(c => freq[c] = (freq[c]||0) + 1);
+    const [mode, n] = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+    const score = n * 10 + +mode;
+    if (score > bestScore) { bestScore = score; best = d; }
+  }
+  return best;
+}
+function parseCSV(text){
+  text = text.replace(/^﻿/, "");
+  const d = detectDelim(text);
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"' && cell.trim() === "") { q = true; cell = ""; }
+    else if (c === d) { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i+1] === "\n") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  const clean = rows.map(r => r.map(s => s.trim())).filter(r => r.some(s => s !== ""));
+  if (!clean.length) return { headers: [], rows: [] };
+  // Header = first row whose width matches the most common width and that isn't mostly numbers.
+  const freq = {}; clean.forEach(r => freq[r.length] = (freq[r.length]||0) + 1);
+  const width = +Object.entries(freq).sort((a,b) => b[1]-a[1] || b[0]-a[0])[0][0];
+  let h = clean.findIndex(r => r.length >= width && r.filter(s => /[a-z]/i.test(s)).length >= Math.ceil(r.filter(Boolean).length / 2));
+  if (h < 0) h = 0;
+  const headers = clean[h].map((s, i) => s || `Column ${i+1}`);
+  return { headers, rows: clean.slice(h + 1).filter(r => r.length >= 2) };
+}
+function dayNum(y, m, d){
+  if (!(m >= 1 && m <= 12 && d >= 1 && d <= 31 && y > 1900)) return NaN;
+  return Math.round(Date.UTC(y, m-1, d) / 864e5);
+}
+function detectDateOrder(values){
+  let dmy = false, mdy = false;
+  for (const v of values) {
+    const m = String(v).trim().match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+    if (!m) continue;
+    if (+m[1] > 12) dmy = true;
+    if (+m[2] > 12) mdy = true;
+  }
+  return dmy && !mdy ? "dmy" : "mdy";
+}
+function parseDate(s, order){
+  s = String(s ?? "").trim(); if (!s) return NaN;
+  let m;
+  if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/))) return dayNum(+m[1], +m[2], +m[3]);
+  if ((m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})\b/))) {
+    let y = +m[3]; if (y < 100) y += 2000;
+    return order === "dmy" ? dayNum(y, +m[2], +m[1]) : dayNum(y, +m[1], +m[2]);
+  }
+  const t = Date.parse(s.replace(/(\d)(st|nd|rd|th)\b/, "$1"));
+  if (!isNaN(t)) { const dt = new Date(t); return dayNum(dt.getFullYear(), dt.getMonth()+1, dt.getDate()); }
+  return NaN;
+}
+function parseAmt(s){
+  s = String(s ?? "").trim(); if (!s) return NaN;
+  let neg = false;
+  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+  if (/\bDR\.?$/i.test(s)) neg = true;
+  if (s.includes("-") || s.includes("−")) neg = !neg;
+  s = s.replace(/[^\d.,]/g, "");
+  if (!s) return NaN;
+  const ld = s.lastIndexOf("."), lc = s.lastIndexOf(",");
+  if (ld >= 0 && lc >= 0) s = lc > ld ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  else if (lc >= 0) s = /,\d{1,2}$/.test(s) ? s.replace(",", ".") : s.replace(/,/g, "");
+  const n = parseFloat(s);
+  return isNaN(n) ? NaN : Math.round((neg ? -n : n) * 100) / 100;
+}
+
+/* ---------- store names ---------- */
+const ALIASES = [
+  [/\bamzn\b|amazon/, "amazon"], [/\bwm\b|wal-?mart/, "walmart"], [/\btgt\b|target/, "target"],
+  [/best\s*buy|\bbby\b/, "bestbuy"], [/\bebay\b/, "ebay"], [/apple\.com|\bapple\b/, "apple"],
+  [/costco/, "costco"], [/home\s*depot/, "homedepot"], [/sephora/, "sephora"], [/ulta/, "ulta"]
+];
+const STOP = new Set(["the","inc","llc","ltd","com","www","store","stores","shop","online","corp","usa","official","and","mktp","marketplace"]);
+const compact = s => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+function bankKey(desc){
+  const low = desc.toLowerCase(); let c = compact(desc);
+  for (const [re, name] of ALIASES) if (re.test(low)) c += "|" + name;
+  return c;
+}
+function storeTokens(store){
+  const low = String(store || "").toLowerCase();
+  const toks = [];
+  const whole = compact(low.replace(/\.com\b|\binc\b|\bllc\b|\bltd\b/g, ""));
+  if (whole.length >= 3) toks.push(whole);
+  low.split(/[^a-z0-9]+/).forEach(t => { if (t.length >= 3 && !STOP.has(t)) toks.push(t); });
+  for (const [re, name] of ALIASES) if (re.test(low)) toks.push(name);
+  return [...new Set(toks)];
+}
+function nameSim(key, toks){
+  if (!toks.length) return 0;
+  if (key.includes(toks[0])) return 1;
+  for (const t of toks) if (t.length >= 4 && key.includes(t)) return 0.8;
+  for (const t of toks) if (t.length >= 5 && key.includes(t.slice(0, 5))) return 0.5;
+  return 0;
+}
+function merchantName(desc){
+  return desc.toUpperCase()
+    .replace(/^(SQ|TST|SP|PP|PAYPAL|DD|IC|PY|SQU)\s*\*\s*/, "")
+    .replace(/\s*[*#].*$/, "").replace(/\d+/g, "").replace(/\s+/g, " ").trim() || desc.toUpperCase();
+}
+
+/* ---------- state ---------- */
+const BANK_FIELDS = [
+  ["date", "Date", true, [/^(transaction|trans\.?)\s*date/i, /^date$/i, /post(ing|ed)?\s*date/i, /date/i]],
+  ["desc", "Description", true, [/^description$/i, /description|merchant|payee|details|narrative|memo|name/i]],
+  ["amount", "Amount", false, [/^amount$/i, /amount|value/i]],
+  ["debit", "Debit / money out", false, [/debit|withdrawal|money out|paid out/i]],
+  ["credit", "Credit / money in", false, [/credit|deposit|money in|paid in/i]],
+];
+const ORDER_FIELDS = [
+  ["date", "Order date", true, [/order(ed)?\s*date|date\s*ordered|purchase(d)?\s*date|placed/i, /^date$/i, /date/i]],
+  ["orderNo", "Order number", false, [/order\s*(id|#|no\.?|num|number)|^order$|confirmation/i]],
+  ["store", "Store", true, [/store|retailer|merchant|vendor|shop|seller|site|platform|brand/i]],
+  ["total", "Total charged", true, [/^(order\s*)?total$/i, /total|amount|price|cost|paid|charge/i]],
+  ["item", "Item", false, [/item|product|title|description|name/i]],
+  ["status", "Status", false, [/status/i]],
+  ["tracking", "Tracking", false, [/tracking/i]],
+];
+const state = {
+  bank: { name: "", headers: [], rows: [], map: {}, example: true },
+  orders: { name: "", headers: [], rows: [], map: {}, example: true },
+  rejected: new Set(),
+  tab: "match",
+  ignored: new Set(load("ignoredMerchants", [])),
+  onlyKnown: load("onlyKnown", false),
+  result: null,
+};
+function load(k, d){ try { const v = localStorage.getItem("chargeMatcher." + k); return v == null ? d : JSON.parse(v); } catch { return d; } }
+function save(k, v){ try { localStorage.setItem("chargeMatcher." + k, JSON.stringify(v)); } catch {} }
+
+function guessMap(headers, fields){
+  const used = new Set(), map = {};
+  for (const [key, , , regs] of fields) {
+    map[key] = -1;
+    outer: for (const re of regs) for (let i = 0; i < headers.length; i++) {
+      if (!used.has(i) && re.test(headers[i])) { map[key] = i; used.add(i); break outer; }
+    }
+  }
+  return map;
+}
+function setData(side, text, name, example){
+  const { headers, rows } = parseCSV(text);
+  const s = state[side];
+  Object.assign(s, { name, headers, rows, example, map: guessMap(headers, side === "bank" ? BANK_FIELDS : ORDER_FIELDS) });
+  if (side === "bank" && s.map.amount >= 0 && s.map.debit >= 0) { s.map.debit = -1; s.map.credit = -1; }
+  state.rejected.clear();
+  renderPanel(side); run();
+}
+
+/* ---------- build records ---------- */
+function buildBank(){
+  const s = state.bank, m = s.map, notes = [];
+  if (m.date < 0 || m.desc < 0 || (m.amount < 0 && m.debit < 0)) return { list: [], notes: ["Pick the date, description and amount columns."] };
+  const order = detectDateOrder(s.rows.map(r => r[m.date]));
+  const raw = s.rows.map((r, i) => ({ i, day: parseDate(r[m.date], order), desc: r[m.desc] || "",
+    amt: m.debit >= 0 ? parseAmt(r[m.debit]) : parseAmt(r[m.amount]) })).filter(x => isFinite(x.day) && isFinite(x.amt) && x.amt !== 0);
+  let sign = "pos";
+  if (m.debit < 0) {
+    sign = $("#set-sign").value;
+    if (sign === "auto") {
+      const neg = raw.filter(x => x.amt < 0).length, pos = raw.length - neg;
+      sign = neg >= pos ? "neg" : "pos";
+      notes.push(`Treating ${sign === "neg" ? "negative" : "positive"} amounts as purchases.`);
+    }
+  }
+  const list = raw.filter(x => m.debit >= 0 ? true : sign === "neg" ? x.amt < 0 : x.amt > 0)
+    .map(x => ({ id: "b" + x.i, day: x.day, desc: x.desc, amt: Math.abs(x.amt), key: bankKey(x.desc), merchant: merchantName(x.desc) }));
+  const skipped = s.rows.length - raw.length;
+  if (skipped) notes.push(`${skipped} row${skipped > 1 ? "s" : ""} skipped (no readable date or amount).`);
+  notes.unshift(`${list.length} purchases found.`);
+  return { list, notes };
+}
+function buildOrders(){
+  const s = state.orders, m = s.map;
+  if (m.date < 0 || m.total < 0) return { list: [], notes: ["Pick the order date and total columns."] };
+  const order = detectDateOrder(s.rows.map(r => r[m.date]));
+  const get = (r, k) => m[k] >= 0 ? (r[m[k]] || "") : "";
+  const groups = new Map(); let skipped = 0;
+  s.rows.forEach((r, i) => {
+    const day = parseDate(r[m.date], order), total = Math.abs(parseAmt(r[m.total]));
+    if (!isFinite(day) || !isFinite(total)) { skipped++; return; }
+    const no = get(r, "orderNo"); const k = no ? "n:" + no : "r:" + i;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push({ i, day, total, store: get(r, "store"), item: get(r, "item"), no, status: get(r, "status"), tracking: get(r, "tracking") });
+  });
+  const list = [...groups.values()].map(g => {
+    const same = g.every(x => Math.abs(x.total - g[0].total) < 0.005);
+    const total = Math.round((same ? g[0].total : g.reduce((a, x) => a + x.total, 0)) * 100) / 100;
+    const items = g.map(x => x.item).filter(Boolean);
+    return { id: "o" + g[0].i, day: Math.min(...g.map(x => x.day)), total, store: g[0].store, orderNo: g[0].no,
+      item: items.length > 1 ? `${items[0]} + ${items.length - 1} more` : (items[0] || ""), status: g[0].status, tracking: g[0].tracking,
+      toks: storeTokens(g[0].store) };
+  }).filter(o => o.total > 0);
+  const notes = [`${list.length} orders found.`];
+  if (skipped) notes.push(`${skipped} row${skipped > 1 ? "s" : ""} skipped (no readable date or total).`);
+  if (m.store < 0) notes.push("Without a store column, matching relies on amount and date only.");
+  return { list, notes };
+}
+
+/* ---------- matching ---------- */
+function combos(arr, k, start = 0, pick = [], out = []){
+  if (pick.length === k) { out.push(pick.slice()); return out; }
+  for (let i = start; i < arr.length; i++) { pick.push(arr[i]); combos(arr, k, i + 1, pick, out); pick.pop(); }
+  return out;
+}
+function run(){
+  const before = Math.max(0, +$("#set-before").value || 0), after = Math.max(0, +$("#set-after").value || 0);
+  const pct = Math.max(0, +$("#set-pct").value || 0);
+  const B = buildBank(), O = buildOrders();
+  $("#bank-hint").textContent = B.notes.join(" ");
+  $("#orders-hint").textContent = O.notes.join(" ");
+  $("#sign-field").hidden = state.bank.map.debit >= 0;
+  const bank = B.list, orders = O.list;
+  const inWin = (b, o) => { const dd = b.day - o.day; return dd >= -before && dd <= after; };
+
+  const cands = [];
+  for (const b of bank) for (const o of orders) {
+    if (!inWin(b, o) || state.rejected.has(b.id + "|" + o.id)) continue;
+    const diff = Math.abs(b.amt - o.total), exact = diff < 0.015, pd = diff / o.total * 100;
+    const sim = nameSim(b.key, o.toks);
+    if (!exact && (pd > pct || sim === 0)) continue;
+    const dd = b.day - o.day;
+    const score = (exact ? 60 : 40 - pd * 2) + sim * 30 - Math.abs(dd) * 1.5 - (dd < 0 ? 3 : 0);
+    cands.push({ b, o, diff, exact, sim, dd, score });
+  }
+  cands.sort((x, y) => y.score - x.score);
+  const usedB = new Set(), usedO = new Set(), matches = [];
+  for (const c of cands) {
+    if (usedB.has(c.b.id) || usedO.has(c.o.id)) continue;
+    usedB.add(c.b.id); usedO.add(c.o.id);
+    const notes = [];
+    if (!c.exact) notes.push(`Charged ${money(c.b.amt - c.o.total).replace("−","")} ${c.b.amt > c.o.total ? "more" : "less"} than the order total`);
+    if (c.sim === 0) notes.push("Store name not found in the bank description");
+    if (Math.abs(c.dd) >= 4) notes.push(`Charged ${Math.abs(c.dd)} days ${c.dd > 0 ? "after" : "before"} the order`);
+    matches.push({ key: c.b.id + "|" + c.o.id, banks: [c.b], orders: [c.o], status: c.exact && c.sim > 0 ? "match" : "check", notes });
+  }
+  // One order, several charges.
+  for (const o of orders) {
+    if (usedO.has(o.id)) continue;
+    const pool = bank.filter(b => !usedB.has(b.id) && inWin(b, o) && b.amt < o.total + 0.01 && nameSim(b.key, o.toks) > 0)
+      .sort((x, y) => Math.abs(x.day - o.day) - Math.abs(y.day - o.day)).slice(0, 12);
+    let hit = null;
+    for (let k = 2; k <= 3 && !hit; k++) hit = combos(pool, k).find(set =>
+      Math.abs(set.reduce((a, b) => a + b.amt, 0) - o.total) < 0.015 && !state.rejected.has(set.map(b => b.id).join(",") + "|" + o.id));
+    if (hit) {
+      hit.forEach(b => usedB.add(b.id)); usedO.add(o.id);
+      matches.push({ key: hit.map(b => b.id).join(",") + "|" + o.id, banks: hit, orders: [o], status: "match", notes: [`Charged in ${hit.length} parts`] });
+    }
+  }
+  // Several orders, one charge.
+  for (const b of bank) {
+    if (usedB.has(b.id)) continue;
+    const pool = orders.filter(o => !usedO.has(o.id) && inWin(b, o) && o.total < b.amt + 0.01 && nameSim(b.key, o.toks) > 0)
+      .sort((x, y) => Math.abs(b.day - x.day) - Math.abs(b.day - y.day)).slice(0, 12);
+    let hit = null;
+    for (let k = 2; k <= 3 && !hit; k++) hit = combos(pool, k).find(set =>
+      Math.abs(set.reduce((a, o) => a + o.total, 0) - b.amt) < 0.015 && !state.rejected.has(b.id + "|" + set.map(o => o.id).join(",")));
+    if (hit) {
+      hit.forEach(o => usedO.add(o.id)); usedB.add(b.id);
+      matches.push({ key: b.id + "|" + hit.map(o => o.id).join(","), banks: [b], orders: hit, status: "match", notes: [`${hit.length} orders charged together`] });
+    }
+  }
+  matches.sort((x, y) => x.orders[0].day - y.orders[0].day);
+
+  const firstDay = bank.length ? Math.min(...bank.map(b => b.day)) : NaN;
+  const lastDay = bank.length ? Math.max(...bank.map(b => b.day)) : NaN;
+  const noCharge = orders.filter(o => !usedO.has(o.id)).map(o => {
+    let note = "", outside = false;
+    if (o.day > lastDay) { note = "Placed after your statement ends"; outside = true; }
+    else if (o.day + after > lastDay) note = "Recent order; the charge may not have posted yet";
+    else if (o.day < firstDay - after) { note = "Placed before your statement starts"; outside = true; }
+    return { o, note, outside };
+  }).sort((x, y) => x.outside - y.outside || x.o.day - y.o.day);
+  const noOrder = bank.filter(b => !usedB.has(b.id)).map(b => ({ b,
+    known: orders.some(o => nameSim(b.key, o.toks) > 0) })).sort((x, y) => y.known - x.known || x.b.day - y.b.day);
+
+  state.result = { matches, noCharge, noOrder, bankCount: bank.length, orderCount: orders.length };
+  render();
+}
+
+/* ---------- rendering ---------- */
+function renderPanel(side){
+  const s = state[side], fields = side === "bank" ? BANK_FIELDS : ORDER_FIELDS;
+  $(`#${side}-chip`).textContent = s.example ? "Example data" : "Your data";
+  $(`#${side}-chip`).className = "chip " + (s.example ? "example" : "loaded");
+  $(`#${side}-source`).textContent = s.name ? `${s.name} · ${s.rows.length} rows` : "";
+  const opts = i => `<option value="-1"${i < 0 ? " selected" : ""}>(none)</option>` +
+    s.headers.map((h, j) => `<option value="${j}"${j === i ? " selected" : ""}>${esc(h)}</option>`).join("");
+  $(`#${side}-map`).innerHTML = fields.map(([k, label, req]) =>
+    `<div class="field"><label for="${side}-map-${k}">${esc(label)}${req ? "" : " <span style=\"opacity:.7\">(optional)</span>"}</label>
+     <select id="${side}-map-${k}" data-side="${side}" data-key="${k}">${opts(s.map[k])}</select></div>`).join("");
+}
+function bankCell(banks){
+  return banks.map(b => `<div>${esc(b.desc)}<div class="sec">${fmtDay(b.day)}</div></div>`).join("");
+}
+function orderCell(orders){
+  return orders.map(o => `<div>${esc(o.store || "Unknown store")}${o.item ? ` · ${esc(o.item)}` : ""}<div class="sec">${fmtDay(o.day)}${o.orderNo ? ` · <span class="mono">${esc(o.orderNo)}</span>` : ""}</div></div>`).join("");
+}
+function render(){
+  const R = state.result;
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const good = R.matches.filter(m => m.status === "match"), check = R.matches.filter(m => m.status === "check");
+  const visibleNoOrder = R.noOrder.filter(x => !state.ignored.has(x.b.merchant) && (!state.onlyKnown || x.known));
+  const inRangeNoCharge = R.noCharge.filter(x => !x.outside);
+  const tiles = [
+    ["match", "good", good.length, "Matched", `${money(sum(good.flatMap(m => m.banks).map(b => b.amt)))} charged`],
+    ["check", "warn", check.length, "Needs a look", "Amount or store name doesn't quite line up"],
+    ["noorder", "bad", visibleNoOrder.length, "Charges with no order", `${money(sum(visibleNoOrder.map(x => x.b.amt)))} not in your tracker`],
+    ["nocharge", "bad", inRangeNoCharge.length, "Orders with no charge",
+      `${money(sum(inRangeNoCharge.map(x => x.o.total)))}` + (R.noCharge.length > inRangeNoCharge.length ? ` · ${R.noCharge.length - inRangeNoCharge.length} outside statement dates` : "")],
+  ];
+  $("#summary").innerHTML = tiles.map(([id, tone, n, label, sub]) =>
+    `<button type="button" class="tile ${tone}" data-tab="${id}" aria-pressed="${state.tab === id}">
+      <span class="big num">${n}</span><span class="label">${label}</span><span class="sub">${sub}</span></button>`).join("");
+
+  const titles = { match: "Matched", check: "Needs a look", noorder: "Bank charges with no order", nocharge: "Orders with no bank charge" };
+  $("#results-title").textContent = titles[state.tab];
+  $("#known-wrap").hidden = state.tab !== "noorder";
+  $("#only-known").checked = state.onlyKnown;
+  let html = "";
+  if (state.tab === "match" || state.tab === "check") {
+    const rows = state.tab === "match" ? good : check;
+    html = rows.length ? `<table><thead><tr><th>Order</th><th class="r">Order total</th><th>Bank charge</th><th class="r">Charged</th><th>Notes</th><th></th></tr></thead><tbody>` +
+      rows.map(m => `<tr><td>${orderCell(m.orders)}</td>
+        <td class="r num">${m.orders.map(o => money(o.total)).join("<br>")}</td>
+        <td>${bankCell(m.banks)}</td>
+        <td class="r num">${m.banks.map(b => money(b.amt)).join("<br>")}</td>
+        <td><div class="notes">${m.status === "match" ? `<span><span class="pill good">Matched</span></span>` : `<span><span class="pill warn">Check</span></span>`}${m.notes.map(n => `<span>${esc(n)}</span>`).join("")}</div></td>
+        <td class="r"><button class="btn small" type="button" data-reject="${esc(m.key)}">Not a match</button></td></tr>`).join("") + `</tbody></table>`
+      : `<div class="empty">${state.tab === "match" ? "No matches yet. Check that the date and amount columns are right." : "Nothing needs a closer look."}</div>`;
+  } else if (state.tab === "noorder") {
+    html = visibleNoOrder.length ? `<table><thead><tr><th>Date</th><th>Bank description</th><th class="r">Amount</th><th>Store</th><th></th></tr></thead><tbody>` +
+      visibleNoOrder.map(({ b, known }) => `<tr><td class="num">${fmtDay(b.day)}</td><td>${esc(b.desc)}</td><td class="r num">${money(b.amt)}</td>
+        <td>${known ? `<span class="pill bad">You order from here</span>` : `<span class="pill quiet">Not in your tracker</span>`}</td>
+        <td class="r"><button class="btn small" type="button" data-ignore="${esc(b.merchant)}">Ignore ${esc(b.merchant.length > 22 ? b.merchant.slice(0, 22) + "…" : b.merchant)}</button></td></tr>`).join("") + `</tbody></table>`
+      : `<div class="empty">Every charge has a matching order.</div>`;
+  } else {
+    html = R.noCharge.length ? `<table><thead><tr><th>Order date</th><th>Order</th><th class="r">Total</th><th>Status</th><th>Notes</th></tr></thead><tbody>` +
+      R.noCharge.map(({ o, note, outside }) => `<tr><td class="num">${fmtDay(o.day)}</td>
+        <td>${esc(o.store || "Unknown store")}${o.item ? ` · ${esc(o.item)}` : ""}${o.orderNo ? `<div class="sec mono">${esc(o.orderNo)}</div>` : ""}${o.tracking ? `<div class="sec">Tracking <span class="mono">${esc(o.tracking)}</span></div>` : ""}</td>
+        <td class="r num">${money(o.total)}</td><td>${esc(o.status) || "—"}</td>
+        <td>${note ? `<span class="pill ${outside ? "quiet" : "warn"}">${esc(note)}</span>` : `<span class="pill bad">No charge found</span>`}</td></tr>`).join("") + `</tbody></table>`
+      : `<div class="empty">Every order has a matching charge.</div>`;
+  }
+  $("#table").innerHTML = html;
+  const ig = $("#ignored");
+  ig.hidden = state.tab !== "noorder" || !state.ignored.size;
+  ig.innerHTML = `Ignored merchants: ` + [...state.ignored].map(m => `<span class="chip">${esc(m)}</span><button class="linkish" type="button" data-unignore="${esc(m)}">show</button>`).join(" ");
+}
+
+/* ---------- events ---------- */
+function readFile(side, file){
+  const r = new FileReader();
+  r.onload = () => setData(side, String(r.result), file.name, false);
+  r.onerror = () => toast("That file couldn't be read. Try exporting it as CSV again.");
+  r.readAsText(file);
+}
+for (const side of ["bank", "orders"]) {
+  $(`#${side}-file`).addEventListener("change", e => { const f = e.target.files[0]; if (f) readFile(side, f); e.target.value = ""; });
+  const p = $(`#panel-${side}`);
+  p.addEventListener("dragover", e => { e.preventDefault(); p.classList.add("drag"); });
+  p.addEventListener("dragleave", e => { if (!p.contains(e.relatedTarget)) p.classList.remove("drag"); });
+  p.addEventListener("drop", e => { e.preventDefault(); p.classList.remove("drag"); const f = e.dataTransfer.files[0]; if (f) readFile(side, f); });
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.paste) { const box = $(`#${t.dataset.paste}-paste`); box.hidden = !box.hidden; if (!box.hidden) $(`#${t.dataset.paste}-paste-text`).focus(); }
+  else if (t.dataset.usePaste) {
+    const side = t.dataset.usePaste, txt = $(`#${side}-paste-text`).value;
+    if (!txt.trim()) { toast("Paste some rows first."); return; }
+    setData(side, txt, "Pasted data", false); $(`#${side}-paste`).hidden = true;
+  }
+  else if (t.dataset.tab) { state.tab = t.dataset.tab; render(); }
+  else if (t.dataset.reject) { state.rejected.add(t.dataset.reject); run(); toast("Pair broken. Both sides are back in the pool."); }
+  else if (t.dataset.ignore) { state.ignored.add(t.dataset.ignore); save("ignoredMerchants", [...state.ignored]); render(); }
+  else if (t.dataset.unignore) { state.ignored.delete(t.dataset.unignore); save("ignoredMerchants", [...state.ignored]); render(); }
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.matches("select[data-side]")) { state[t.dataset.side].map[t.dataset.key] = +t.value; state.rejected.clear(); run(); }
+  else if (t.id === "only-known") { state.onlyKnown = t.checked; save("onlyKnown", t.checked); render(); }
+  else if (t.closest(".settings")) run();
+});
+$(".settings").addEventListener("input", e => { if (e.target.type === "number") run(); });
+
+$("#copy-tsv").addEventListener("click", () => {
+  const R = state.result, clean = s => String(s ?? "").replace(/[\t\n\r]+/g, " ");
+  const lines = [["Result","Order date","Store","Item","Order number","Order total","Bank date","Bank description","Charged","Notes"].join("\t")];
+  const row = a => lines.push(a.map(clean).join("\t"));
+  const d = n => isFinite(n) ? new Date(n * 864e5).toISOString().slice(0, 10) : "";
+  for (const m of R.matches) row([m.status === "match" ? "Matched" : "Needs a look",
+    m.orders.map(o => d(o.day)).join(", "), m.orders.map(o => o.store).join(", "), m.orders.map(o => o.item).join(", "),
+    m.orders.map(o => o.orderNo).join(", "), m.orders.reduce((a, o) => a + o.total, 0).toFixed(2),
+    m.banks.map(b => d(b.day)).join(", "), m.banks.map(b => b.desc).join(", "), m.banks.reduce((a, b) => a + b.amt, 0).toFixed(2), m.notes.join("; ")]);
+  for (const { b, known } of R.noOrder) if (!state.ignored.has(b.merchant)) row(["Charge with no order", "", "", "", "", "", d(b.day), b.desc, b.amt.toFixed(2), known ? "Store you order from" : ""]);
+  for (const { o, note } of R.noCharge) row(["Order with no charge", d(o.day), o.store, o.item, o.orderNo, o.total.toFixed(2), "", "", "", note]);
+  const text = lines.join("\n");
+  const fallback = () => { const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch {} ta.remove(); toast(ok ? `Copied ${lines.length - 1} rows. Paste into a spreadsheet.` : "Copy was blocked by the browser."); };
+  try { navigator.clipboard.writeText(text).then(() => toast(`Copied ${lines.length - 1} rows. Paste into a spreadsheet.`), fallback); } catch { fallback(); }
+});
+let toastTimer;
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.hidden = true, 2600); }
+
+setData("bank", SAMPLE_BANK, "sample-statement.csv", true);
+setData("orders", SAMPLE_ORDERS, "sample-orders.csv", true);
+})();
+</script>
+</body>
+</html>
