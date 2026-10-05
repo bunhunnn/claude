@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+  <title>SiteWatch</title>
+  <link rel="stylesheet" href="renderer.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">👁 SiteWatch</div>
+    <button id="btn-new">+ New watch</button>
+    <button id="btn-settings" class="secondary">Alert settings</button>
+  </header>
+
+  <main>
+    <section id="list"></section>
+
+    <section id="editor" class="card hidden">
+      <h2 id="editor-title">New watch</h2>
+      <label>Name <input id="f-name" placeholder="Alpine AIO restock" /></label>
+      <label>Page URL <input id="f-url" placeholder="https://alpineaio.com/purchase" /></label>
+      <label>Only watch this part of the page (CSS selector, optional)
+        <input id="f-selector" placeholder="e.g. main, #product" /></label>
+      <label>Alert me when
+        <select id="f-mode">
+          <option value="out_of_stock">the “sold out” text disappears</option>
+          <option value="in_stock">the “in stock” text appears</option>
+          <option value="change">anything on the page changes</option>
+        </select>
+      </label>
+      <label id="kw-row">Text to look for (comma-separated)
+        <input id="f-keywords" placeholder="Sold out, Out of stock" /></label>
+      <label>Check
+        <select id="f-schedule">
+          <option value="interval">every N seconds</option>
+          <option value="times">at specific times each day</option>
+        </select>
+      </label>
+      <label id="row-interval">Seconds between checks (min 30) <input id="f-every" type="number" min="30" value="60" /></label>
+      <label id="row-window" >Only between (optional) <input id="f-window" placeholder="08:00-22:00" /></label>
+      <label id="row-times" class="hidden">Times (24h, comma-separated) <input id="f-times" placeholder="09:00, 12:30, 18:00" /></label>
+      <label class="check"><input id="f-enabled" type="checkbox" checked /> Enabled</label>
+      <p id="editor-error" class="error hidden"></p>
+      <div class="row">
+        <button id="btn-save">Save</button>
+        <button id="btn-cancel" class="secondary">Cancel</button>
+      </div>
+    </section>
+
+    <section id="settings" class="card hidden">
+      <h2>Alert settings</h2>
+      <p class="hint">Desktop notifications are always on. Add these to also get alerts on your phone.</p>
+      <label>ntfy.sh topic (install the ntfy app, subscribe to the same topic)
+        <input id="s-ntfy" placeholder="my-secret-topic-123" /></label>
+      <label>Discord webhook URL <input id="s-discord" placeholder="https://discord.com/api/webhooks/…" /></label>
+      <p id="settings-msg" class="hint hidden"></p>
+      <div class="row">
+        <button id="btn-settings-save">Save</button>
+        <button id="btn-settings-test" class="secondary">Send test alert</button>
+        <button id="btn-settings-close" class="secondary">Close</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Activity</h2>
+      <div id="log" class="log"></div>
+    </section>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

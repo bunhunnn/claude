@@ -7,3 +7,6 @@ __pycache__/
 # desktop-app (Electron)
 desktop-app/node_modules/
 desktop-app/dist/
+
+sitewatch-app/node_modules/
+sitewatch-app/dist/

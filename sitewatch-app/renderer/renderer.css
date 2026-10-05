@@ -1,0 +1,30 @@
+:root { --bg:#f5f6f8; --card:#fff; --text:#1c1f26; --muted:#667; --accent:#2f6bff; --ok:#12805c; --bad:#c0392b; --warn:#b7791f; --line:#dde1e8; }
+@media (prefers-color-scheme: dark) { :root { --bg:#15171c; --card:#1f232b; --text:#e8eaf0; --muted:#97a0b0; --line:#2f3541; } }
+* { box-sizing: border-box; }
+body { margin:0; font:14px system-ui, sans-serif; background:var(--bg); color:var(--text); }
+header { display:flex; gap:10px; align-items:center; padding:12px 18px; background:var(--card); border-bottom:1px solid var(--line); }
+.brand { font-weight:700; font-size:18px; margin-right:auto; }
+main { max-width:860px; margin:0 auto; padding:18px; display:grid; gap:14px; }
+.card, .watch { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+h2 { margin:0 0 10px; font-size:16px; }
+label { display:block; margin:10px 0; color:var(--muted); font-size:13px; }
+label.check { color:var(--text); }
+input, select { display:block; width:100%; margin-top:4px; padding:8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--text); font:inherit; }
+input[type=checkbox] { display:inline; width:auto; margin:0 6px 0 0; }
+button { padding:8px 14px; border:0; border-radius:6px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
+button.secondary { background:transparent; color:var(--text); border:1px solid var(--line); }
+button.small { padding:5px 10px; font-size:12px; }
+.row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.hidden { display:none !important; }
+.hint { color:var(--muted); }
+.error { color:var(--bad); }
+.watch { display:grid; gap:6px; }
+.watch .top { display:flex; align-items:center; gap:10px; }
+.watch .name { font-weight:600; font-size:15px; }
+.watch .meta { color:var(--muted); font-size:12px; word-break:break-all; }
+.badge { padding:2px 8px; border-radius:99px; font-size:12px; font-weight:600; color:#fff; background:var(--muted); }
+.badge.in_stock { background:var(--ok); } .badge.changed { background:var(--warn); }
+.badge.error, .badge.logged_out { background:var(--bad); } .badge.checking { background:var(--accent); }
+.log { max-height:220px; overflow:auto; font:12px ui-monospace, monospace; color:var(--muted); }
+.log div { padding:2px 0; }
+.empty { text-align:center; color:var(--muted); padding:30px; }
